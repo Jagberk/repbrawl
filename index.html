@@ -1,0 +1,563 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0a0e1a"><title>Ad Astra</title>
+
+<style>
+
+:root{--bg:#0a0e1a;--pn:#121830;--ln:#2a3556;--tx:#efe6d2;--mut:#8b93ad;--a:#ff6a2b;--ok:#6fe0a8;--bad:#ff5a6e}
+
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+
+[hidden]{display:none!important}
+
+body{background:var(--bg);color:var(--tx);font:500 16px/1.4 ui-sans-serif,system-ui,sans-serif;min-height:100dvh;display:flex;justify-content:center}
+
+#stars{position:fixed;inset:0;z-index:0}
+
+#app{position:relative;z-index:1;width:100%;max-width:480px;padding:16px;padding-top:max(16px,env(safe-area-inset-top));padding-bottom:max(28px,env(safe-area-inset-bottom))}
+
+section{display:none;flex-direction:column;gap:12px}section.on{display:flex}
+
+.logo{text-align:center;font:400 34px Georgia,'Times New Roman',serif;letter-spacing:.3em;text-transform:uppercase;padding:6px 0 10px;border-bottom:1.5px solid var(--ln);margin-bottom:4px}
+
+.logo svg{display:block;margin:0 auto 6px;width:22px;height:22px;fill:var(--a)}
+
+.logo small{display:block;font:600 11px ui-monospace,Menlo,monospace;letter-spacing:.25em;color:var(--mut);margin-top:6px}
+
+.lbl{font:600 11px ui-monospace,Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--mut)}
+
+.pn{background:var(--pn);border:1.5px solid var(--ln);border-radius:8px;padding:12px}
+
+.num{font:700 54px/1 ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+
+.row{display:flex;gap:10px;align-items:center}.row>*{flex:1;min-width:0}
+
+.stat{text-align:center}.stat b{display:flex;justify-content:center;align-items:center;gap:6px;font:700 24px ui-monospace,Menlo,monospace}
+
+.stat svg{width:18px;height:18px;fill:var(--a)}
+
+button{font:700 16px ui-sans-serif,system-ui,sans-serif;text-transform:uppercase;letter-spacing:.09em;min-height:54px;border:0;border-radius:8px;background:var(--a);color:#1a0d05;box-shadow:0 4px 0 #8f3a12;padding:0 12px}
+
+button:active{transform:translateY(3px);box-shadow:0 1px 0 #8f3a12}
+
+button.alt{background:var(--pn);color:var(--tx);border:1.5px solid var(--ln);box-shadow:0 4px 0 #05070e}
+
+button:disabled{opacity:.45}
+
+.op{display:flex;align-items:center;gap:12px;text-align:left;text-transform:none;letter-spacing:0;width:100%;min-height:64px;margin-bottom:6px;font-weight:600}
+
+.op.sel{border-color:var(--a)}.op.boss{border-style:dashed}
+
+.op .av{width:46px;flex:none}.op .oi{flex:1;display:flex;flex-direction:column}.op b{font-size:17px}.op small{color:var(--mut);font-weight:500;font-size:13px}.op .tk{flex:none;width:22px}.op .tk svg{width:22px;height:22px;stroke:var(--ok);fill:none;stroke-width:3}
+
+.hud3{display:flex;justify-content:space-between;align-items:flex-end}.hud3>div:nth-child(2){text-align:center}.hud3>div:last-child{text-align:right}
+
+.bar{height:10px;background:#05070e;border-radius:6px;overflow:hidden;margin-top:8px}.bar i{display:block;height:100%;width:0;background:var(--a);transition:width .2s}#hr i{background:var(--tx)}
+
+#arena{position:relative;height:150px;display:flex;justify-content:center;align-items:flex-end;margin-top:6px}#rival{width:118px}
+
+#say{position:absolute;top:0;left:8%;right:8%;text-align:center;background:var(--tx);color:#10152a;font-weight:700;font-size:15px;padding:7px 10px;border-radius:10px;opacity:0;transition:opacity .2s}#say.on{opacity:1}
+
+#say:after{content:'';position:absolute;left:50%;bottom:-7px;margin-left:-7px;border:7px solid transparent;border-bottom:0;border-top-color:var(--tx)}
+
+.bob{animation:bob .3s}@keyframes bob{40%{transform:translateY(8px) scale(1.04,.94)}}
+
+.shk{animation:sk .3s}@keyframes sk{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+#fx{position:fixed;inset:0;background:var(--a);opacity:0;pointer-events:none;z-index:5}#fx.on{animation:fx .15s}@keyframes fx{0%{opacity:.3}100%{opacity:0}}
+
+#vw{position:relative;width:100%;max-height:44vh;background:#000;border-radius:8px;border:1.5px solid var(--ln);overflow:hidden;aspect-ratio:4/3}
+
+#vw video,#vw canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+
+#debugBox{position:absolute;top:6px;left:8px;z-index:2;font:12px ui-monospace,monospace;background:#000b;padding:3px 6px;border-radius:4px}
+
+#msg{position:absolute;left:0;right:0;bottom:10px;text-align:center;font:700 22px Georgia,serif;text-shadow:0 2px 6px #000;padding:0 8px}
+
+#msg.big{top:22%;bottom:auto;font-size:110px}
+
+#cf{position:fixed;inset:0;pointer-events:none;z-index:6}
+
+.res{font:400 44px Georgia,serif;letter-spacing:.14em;text-transform:uppercase;text-align:center;margin-top:10px}
+
+.lg{display:flex;gap:10px;padding:8px 10px;border-bottom:1px solid var(--ln);font:600 16px ui-monospace,Menlo,monospace}.lg:last-child{border:0}
+
+.lg .rk{width:28px;color:var(--mut)}.lg .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:ui-sans-serif,system-ui}.lg.me{color:var(--a)}
+
+.modal{position:fixed;inset:0;background:#05070ecc;z-index:9;display:flex;align-items:center;justify-content:center;padding:20px}.modal .pn{width:100%;max-width:400px;display:flex;flex-direction:column;gap:12px}
+
+input{font:700 22px ui-sans-serif,system-ui;text-align:center;min-height:54px;border:1.5px solid var(--ln);border-radius:8px;background:var(--bg);color:var(--tx);width:100%;min-width:0}#rc{text-transform:uppercase}
+
+h2{font:400 24px Georgia,serif}
+
+@media(max-width:360px){button{font-size:13px;letter-spacing:.05em;padding:0 8px}.stat .lbl{font-size:9px;letter-spacing:.12em}.num{font-size:44px}.logo{font-size:29px}.stat b{font-size:21px}.op b{font-size:16px}.res{font-size:36px}}
+</style></head><body><canvas id="stars"></canvas><div id="fx"></div><canvas id="cf"></canvas><div id="app">
+
+
+
+<section id="home" class="on">
+
+<div class="logo"><svg viewBox="0 0 24 24"><path d="M12 1l3 8 8 .5-6.3 5.2 2.2 8.3L12 18.3 5.1 23l2.2-8.3L1 9.5 9 9z"/></svg>Ad Astra<small>PUSH-UPS · TO THE STARS</small></div>
+
+<div class="row" id="stats"></div>
+
+<div><div class="lbl" style="margin:4px 0 8px">Choose your opponent</div><div id="ops"></div></div>
+
+<button data-a="go">Launch battle</button>
+
+<div class="row"><button class="alt" data-a="board">Leaderboard</button><button class="alt" data-a="shop">Themes</button></div>
+
+<div class="row"><button class="alt" data-a="chal">Same-phone duel</button><button class="alt" data-a="duel">Online duel</button></div>
+
+<button class="alt" data-a="snd" id="snd" style="min-height:44px"></button>
+
+</section>
+
+
+
+<section id="play">
+
+<div class="pn">
+
+<div class="hud3"><div><div class="lbl" id="yl">You</div><div class="num" id="rep">0</div></div><div><div class="lbl">Time</div><div class="num" id="tm">60</div></div><div id="oc"><div class="lbl" id="ol">Rival</div><div class="num" id="orep">0</div></div></div>
+
+<div class="bar"><i id="hm"></i></div><div class="bar" id="hr"><i></i></div>
+
+<div id="arena"><div id="say"></div><div id="rival"></div></div>
+
+<div class="row" style="margin-top:8px"><span class="lbl">Win streak</span><b id="wsd" style="text-align:right;font:700 20px ui-monospace,monospace">0</b></div>
+
+</div>
+
+<div id="vw"><video id="v" playsinline muted></video><canvas id="cv"></canvas><div id="debugBox"></div><div id="msg"></div></div>
+
+<div class="pn" id="deny" hidden></div>
+
+<div class="row"><button id="rb" data-a="ready">Start</button><button class="alt" data-a="flip">Flip cam</button></div>
+
+<button id="sb" data-a="skip" hidden>Skip calibration (less reliable)</button>
+
+<div class="row"><button class="alt" data-a="skel">Skeleton</button><button class="alt" data-a="home">Exit</button></div>
+
+<div class="pn lbl" id="hint" style="text-transform:none;letter-spacing:.02em;font-size:14px;color:var(--tx)">Place the camera to your side with your shoulder, elbow, wrist and hip visible. Hold your usual top position to calibrate, then do your normal push-ups. If a tucked elbow is hidden, move the camera slightly toward that side. Do not change your form for the counter.</div>
+
+</section>
+
+
+
+<section id="end">
+
+<div class="res" id="res"></div>
+
+<div class="row" style="align-items:flex-end"><div id="endbot" style="max-width:130px"></div><div class="pn" id="endsay" style="font-weight:700;font-family:Georgia,serif;font-size:18px"></div></div>
+
+<div class="pn" id="sum" style="font-size:18px;line-height:1.8"></div>
+
+<button id="nx" data-a="next" hidden>Player 2: your turn</button>
+
+<button id="rm" data-a="again">Rematch</button>
+
+<div class="row"><button class="alt" data-a="board">Leaderboard</button><button class="alt" data-a="home">Home</button></div>
+
+</section>
+
+
+
+<section id="boards"><div class="logo" style="font-size:26px">Leaderboard</div>
+
+<div><div class="lbl" style="margin-bottom:6px">Top 20 · all time</div><div class="pn" id="lbA"></div></div>
+
+<div><div class="lbl" style="margin-bottom:6px">Top 20 · today</div><div class="pn" id="lbT"></div></div>
+
+<button class="alt" data-a="board">Refresh</button><button class="alt" data-a="home">Back</button></section>
+
+
+
+<section id="shop"><div class="logo" style="font-size:26px">Themes</div><div id="th"></div><button class="alt" data-a="home">Back</button></section>
+
+
+
+<section id="mp"><div class="logo" style="font-size:26px">Online duel</div>
+
+<div class="pn">First to <b id="tg">20</b> reps wins.<div class="row" id="tgs" style="margin-top:8px"></div></div>
+
+<button data-a="mkroom">Create room</button><div class="pn" id="mpinfo" hidden></div>
+
+<div class="row"><input id="rc" placeholder="Room code" maxlength="5" autocomplete="off"><button data-a="join">Join</button></div>
+
+<button class="alt" data-a="home">Back</button></section>
+
+</div>
+
+
+
+<div class="modal" id="nm" hidden><div class="pn"><div class="lbl">Mission log</div><h2>Enter your callsign</h2><div class="lbl" style="text-transform:none;letter-spacing:.02em">Shown on the public leaderboard. You only type it once.</div><input id="ni" maxlength="16" placeholder="Your name" autocomplete="off"><div class="row"><button class="alt" data-a="nskip">Skip</button><button data-a="nsave">Save score</button></div></div></div>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
+<script type="module">
+
+// ===== PASTE YOUR FIREBASE CONFIG HERE (Firebase console > Project settings > Your apps > Web app) =====
+
+const firebaseConfig={apiKey:"AIzaSyBbBi3KUMn9XonLrzcyLKYRyxrtJGGTj8M",authDomain:"ad-astra-eb50e.firebaseapp.com",projectId:"ad-astra-eb50e",storageBucket:"ad-astra-eb50e.firebasestorage.app",messagingSenderId:"129216223635",appId:"1:129216223635:web:ab85fa52b13093fd99f066"};
+
+// =====================================================================================================
+
+import{PoseLandmarker,FilesetResolver}from"https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+
+const $=id=>document.getElementById(id),K='adastra1',NK='adastra_name',v=$('v'),cv=$('cv'),cx=cv.getContext('2d');
+
+const MAXR=150,MINSEC=5,TARGET=40;
+
+let S={xp:0,coins:0,streak:0,last:'',snd:1,theme:0,own:[0],beat:[0,0,0,0,0],wins:0,ws:0,bd:{d:'',r:0}};
+
+try{Object.assign(S,JSON.parse(localStorage.getItem(K)||'{}'))}catch(e){}
+
+let NAME='';try{NAME=localStorage.getItem(NK)||''}catch(e){}
+
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+
+const day=d=>{d=d||new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
+
+const THEMES=[['Signal','#ff6a2b',0],['Aurora','#4fe3b0',150],['Solar','#ffd166',300]];
+
+const applyTheme=()=>document.documentElement.style.setProperty('--a',THEMES[S.theme][1]);
+
+const LV=()=>1+Math.floor(S.xp/200);
+
+const strk=()=>S.last==day()||S.last==day(new Date(Date.now()-864e5))?S.streak:0;
+
+const FLAME='<svg viewBox="0 0 24 24"><path d="M12 2c1 4 6 6 6 11a6 6 0 0 1-12 0c0-2 1-3.500 2-4.500 0 2 1 3 2 3 0-4-1-6 2-9.500z"/></svg>';
+
+const CHK='<svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>';
+
+const LOCK='<svg viewBox="0 0 24 24" style="stroke:var(--mut)"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+
+
+
+/* opponents */
+
+const OP=[{n:'Pip',tag:'The Rookie',c:'#8fd6b4',base:3.1},{n:'Comet',tag:'The Sprinter',c:'#ffd166',base:1.7},{n:'Nova',tag:'The Metronome',c:'#7fb8ff',base:2.2},{n:'Vex',tag:'The Mind Gamer',c:'#ff8fb1',base:2.3},{n:'The Zenith',tag:'Final Boss',c:'#ff6a2b',base:1.55}];
+
+const T=[
+
+{start:["Don't tell my mom I'm racing!","Okay okay, let's gooo!"],slow:["Hello? Did you fall asleep?","Floor looks comfy, huh?"],lead:["Wow, I'm winning! Is this real?","Look at me go!"],behind:["Ow ow ow my arms!","You're so fast, wait up!"],win:["I WON! Best day ever!","Beginner's luck? Nope, skill!"],lose:["Nice one... I'll train harder!","You're amazing. Rematch?"]},
+
+{start:["Catch me if you can!","Sprinting out the gate!"],slow:["Tick tock, slowpoke!","Dust in my rearview!"],lead:["Too fast for you!","Zoom zoom!"],behind:["Huff... too... fast... start...","My lungs! My lungs!"],win:["Speed wins. Always.","Blink and you missed it!"],lose:["I burned out... damn.","Ugh, I paced it wrong!"]},
+
+{start:["Steady. Breathe. Win.","Tempo set. Try to keep up."],slow:["You're off the beat.","My rhythm never breaks."],lead:["Consistency beats chaos.","Just like clockwork."],behind:["The metronome... is wobbling.","Impossible... hold tempo..."],win:["Predictable. Perfect.","Math always wins."],lose:["Your pace broke my timer.","Recalculating..."]},
+
+{start:["I've already read your next move.","Let's see what you're made of."],slow:["Losing focus? Shame.","I can hear you doubting."],lead:["You're in my head now.","Check the scoreboard. Feel that?"],behind:["That... wasn't in my plan.","Stop. Messing. With my head."],win:["Told you. Mind over muscle.","Never even broke a sweat."],lose:["Fine. You earned that one.","I misjudged you. Won't again."]},
+
+{start:["I am the last star you'll see.","Kneel. Then push."],slow:["Is that all you've got?","Even gravity is laughing."],lead:["There is no escaping the Zenith.","Gravity answers to me."],behind:["IMPOSSIBLE.","The Zenith... does not... sweat."],win:["The stars stay out of your reach.","Come back when you're stronger."],lose:["You... reached the stars.","Ad astra, champion."]}];
+
+
+
+/* mascot */
+
+const EY={idle:'<circle cx="46" cy="64" r="6"/><circle cx="74" cy="64" r="6"/>',smug:'<circle cx="46" cy="66" r="6"/><circle cx="74" cy="66" r="6"/><path d="M36 61h20M64 61h20" stroke="#0a0e1a" stroke-width="8"/>',strain:'<path d="M39 58l14 7-14 7M81 58l-14 7 14 7" fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>',cheer:'<path d="M39 68q7-12 14 0M67 68q7-12 14 0" fill="none" stroke-width="4" stroke-linecap="round"/>',sad:'<circle cx="46" cy="66" r="6"/><circle cx="74" cy="66" r="6"/><path d="M38 55l16 6M82 55l-16 6" stroke-width="4" stroke-linecap="round"/>'};
+
+const MO={idle:'<path d="M50 81h20" fill="none" stroke-width="4" stroke-linecap="round"/>',smug:'<path d="M48 79q14 9 26-3" fill="none" stroke-width="4" stroke-linecap="round"/>',strain:'<path d="M48 82q4-5 8 0t8 0t8 0" fill="none" stroke-width="4" stroke-linecap="round"/>',cheer:'<path d="M46 76q14 16 28 0z"/>',sad:'<path d="M48 85q12-10 24 0" fill="none" stroke-width="4" stroke-linecap="round"/>'};
+
+const ACC=['<path d="M60 26V10" stroke-width="4"/><circle cx="60" cy="9" r="5" stroke="none"/>','<path d="M46 28L38 12M74 28l8-16" stroke-width="4"/><circle cx="38" cy="11" r="4" stroke="none"/><circle cx="82" cy="11" r="4" stroke="none"/>','<rect x="14" y="56" width="10" height="24" rx="4" stroke="none"/><rect x="96" y="56" width="10" height="24" rx="4" stroke="none"/>','<path d="M40 30L34 12l14 8M80 30l6-18-14 8" stroke-width="4" stroke-linejoin="round"/>','<path d="M34 30l-2-16 14 10 14-14 14 14 14-10-2 16z" stroke="none"/>'];
+
+function bot(c,m,i){const sw=m=='strain'?'<path d="M18 44q5 8 0 12q-5-4 0-12zM102 40q5 8 0 12q-5-4 0-12z" fill="#7fd4ff" stroke="none"/>':'',st=m=='cheer'?'<path d="M14 24l3 6 6 1-5 4 2 6-6-4-6 4 2-6-5-4 6-1zM104 18l2 5 5 1-4 3 1 5-5-3-5 3 1-5-4-3 5-1z" fill="#ffd166" stroke="none"/>':'';
+
+return`<svg viewBox="0 0 120 120"><g fill="${c}" stroke="${c}" stroke-linecap="round">${ACC[i%5]}</g><circle cx="60" cy="66" r="42" fill="${c}"/><rect x="26" y="46" width="68" height="44" rx="20" fill="#0a0e1a"/><g fill="#efe6d2" stroke="#efe6d2">${EY[m]}${MO[m]}</g>${sw}${st}</svg>`}
+
+
+
+/* audio */
+
+let ac;const sfx=(f=200,d=.12)=>{if(!S.snd||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain(),n=ac.currentTime;o.type='square';o.frequency.setValueAtTime(f,n);o.frequency.exponentialRampToValueAtTime(40,n+d);g.gain.setValueAtTime(.2,n);g.gain.exponentialRampToValueAtTime(.001,n+d);o.connect(g).connect(ac.destination);o.start();o.stop(n+d)}catch(e){}};
+
+
+
+/* state */
+
+let rv=0,face='user',C=null,M=null,ph='idle',sk=true,stream,pl,raf=0,L,lastT=0,tgt=20,camSeq=0;
+
+let st='up',sm={},hold=0,t0=0,reps=0,ai=0,nextAi=0,tmr,cdt,mood='idle',lastRep=0,lastTaunt=0,lastSay=0,sayT,sent=false,pend=null;
+
+const go=id=>document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id==id));
+
+const pulse=(el,c)=>{el.classList.remove(c);void el.offsetWidth;el.classList.add(c)};
+
+const msg=(t,c,big)=>{const m=$('msg');m.textContent=t;m.style.color=c||'#fff';m.className=big?'big':''};
+
+const unl=i=>i==0||(i<4?!!S.beat[i-1]:S.beat.slice(0,4).every(Boolean));
+
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+
+
+function home(){go('home');const s=strk();
+
+$('stats').innerHTML=`<div class="pn stat"><div class="lbl">Level</div><b>${LV()}</b></div><div class="pn stat"><div class="lbl">Coins</div><b>${S.coins}</b></div><div class="pn stat"><div class="lbl">Daily</div><b>${FLAME}${s}</b></div><div class="pn stat"><div class="lbl">Streak</div><b>${S.ws}</b></div>`;
+
+if(!unl(rv))rv=0;
+
+$('ops').innerHTML=OP.map((o,i)=>{const u=unl(i);return`<button class="alt op ${i==rv?'sel':''} ${i==4?'boss':''}" data-a="rv" data-v="${i}" ${u?'':'disabled'}><span class="av">${bot(o.c,'idle',i)}</span><span class="oi"><b>${o.n}</b><small>${u?o.tag:i==4?'Beat all four to unlock':'Beat '+OP[i-1].n+' to unlock'}</small></span><span class="tk">${S.beat[i]?CHK:u?'':LOCK}</span></button>`}).join('');
+
+$('snd').textContent=S.snd?'Sound on':'Sound off'}
+
+
+
+/* camera + pose */
+
+async function loadPose(){msg('Loading tracker...');const fs=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+
+const o=d=>({baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",delegate:d},runningMode:"VIDEO",numPoses:1});
+
+try{pl=await PoseLandmarker.createFromOptions(fs,o("GPU"))}catch(e){pl=await PoseLandmarker.createFromOptions(fs,o("CPU"))}}
+
+function stopCam(){camSeq++;cancelAnimationFrame(raf);raf=0;L=null;hold=0;lastVideoTime=-1;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null}
+
+async function cam(){stopCam();const seq=camSeq,d=$('deny');d.hidden=true;$('rb').disabled=true;
+
+try{const incoming=await navigator.mediaDevices.getUserMedia({video:{facingMode:face,width:{ideal:640},height:{ideal:480}},audio:false});
+
+if(seq!==camSeq){incoming.getTracks().forEach(t=>t.stop());return}stream=incoming;v.srcObject=stream;await v.play();if(seq!==camSeq)return;lastT=0;lastVideoTime=-1;cv.width=v.videoWidth;cv.height=v.videoHeight;$('vw').style.aspectRatio=v.videoWidth+'/'+v.videoHeight;
+
+if(!pl)await loadPose();if(seq!==camSeq)return;$('rb').disabled=false;msg(ph=='idle'?'Frame your whole body, then tap Start':'');loop()}
+
+catch(e){if(seq!==camSeq)return;stopCam();d.hidden=false;d.innerHTML=(e.name=='NotAllowedError'||e.name=='SecurityError'||!navigator.mediaDevices)?
+
+`<b>Camera blocked.</b><ol style="margin:8px 0 0 20px;line-height:1.6"><li>Tap the lock or camera icon in your browser's address bar.</li><li>Set Camera to Allow.</li><li>Reload this page.</li></ol><p style="margin-top:8px">The camera needs HTTPS (GitHub Pages and Netlify provide it). Video never leaves your phone.</p>`:
+
+`<b>Couldn't start.</b> ${esc(e.name)}: ${esc(e.message)}. Check your connection (the tracker downloads once) and that no other app is using the camera.`}}
+
+function loop(){raf=requestAnimationFrame(loop);const t=performance.now();if(!pl||v.readyState<2||v.currentTime===lastVideoTime||t-lastT<40)return;lastT=t;lastVideoTime=v.currentTime;
+
+try{const r=pl.detectForVideo(v,t);L=r.landmarks&&r.landmarks[0]}catch(e){return}draw();frame(t)}
+
+const LINK=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28]];
+
+function draw(){cx.clearRect(0,0,cv.width,cv.height);if(!sk||!L)return;cx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--a');cx.fillStyle='#fff';cx.lineWidth=4;
+
+LINK.forEach(([i,j])=>{if((L[i].visibility||0)>.3&&(L[j].visibility||0)>.3){cx.beginPath();cx.moveTo(L[i].x*cv.width,L[i].y*cv.height);cx.lineTo(L[j].x*cv.width,L[j].y*cv.height);cx.stroke()}});
+
+[11,12,13,14,15,16,23,24,25,26,27,28].forEach(i=>{if((L[i].visibility||0)>.3){cx.beginPath();cx.arc(L[i].x*cv.width,L[i].y*cv.height,5,0,7);cx.fill()}})}
+
+
+
+/* push-up counting */
+
+/* Push-up tracker: one arm per rep, top-position calibration and loss reset. */
+let trackSide=null,trackLost=0,topSamples=[],topAngle=165,topReady=false,phaseAt=0,repBottom=0,lastVideoTime=-1;
+const AR=()=>v.videoWidth/v.videoHeight||.75;
+const ang=(a,b,c)=>{const x1=(a.x-b.x)*AR(),y1=a.y-b.y,x2=(c.x-b.x)*AR(),y2=c.y-b.y;return Math.abs(Math.atan2(x1*y2-y1*x2,x1*x2+y1*y2)*180/Math.PI)};
+const vis=i=>L&&L[i]?Math.min(L[i].visibility??0,L[i].presence??1):0;
+const ema=(k,x)=>sm[k]=sm[k]==null?x:sm[k]*.45+x*.55;
+function resetTracker(calibrate=false){st='seek';sm={};phaseAt=0;repBottom=0;trackSide=null;trackLost=0;if(calibrate){topSamples=[];topReady=false;topAngle=165}}
+function armQuality(o){if(!L)return 0;return Math.min(...[11,13,15,23].map(i=>vis(i+o)))}
+function chooseArm(){const now=performance.now();if(trackSide!==null&&armQuality(trackSide)>=.35){trackLost=0;return trackSide}if(trackSide!==null){trackLost=trackLost||now;if(now-trackLost<450)return null;resetTracker(false)}const a=armQuality(0),b=armQuality(1);if(Math.max(a,b)<.45)return null;trackSide=a>=b?0:1;trackLost=0;return trackSide}
+function metrics(){const o=chooseArm();if(o===null)return null;const shoulder=L[11+o],hip=L[23+o],wrist=L[15+o];const torso=Math.hypot((shoulder.x-hip.x)*AR(),shoulder.y-hip.y);if(torso<.05)return null;const horizontal=Math.abs((shoulder.x-hip.x)*AR())/torso;return {el:ang(shoulder,L[13+o],wrist),horizontal,body:vis(27+o)>.35?ang(shoulder,hip,L[27+o]):0,side:o}}
+const elbow=()=>{const m=metrics();return m?m.el:0};
+const body=()=>{const m=metrics();return m?m.body:0};
+function calibrateTop(m){if(!m||m.horizontal<.38||m.el<120){topSamples=[];return false}topSamples.push(m.el);if(topSamples.length>16)topSamples.shift();if(topSamples.length>=12){const sorted=[...topSamples].sort((a,b)=>a-b);if(sorted[sorted.length-1]-sorted[0]<18){topAngle=sorted[Math.floor(sorted.length/2)];topReady=true;return true}}return false}
+const thresholds=()=>({down:Math.max(85,Math.min(125,topAngle-35)),up:Math.max(115,Math.min(160,topAngle-12))});
+function showDebug(){const d=$('debugBox'),m=metrics(),th=thresholds();d.textContent=!m?'Keep shoulder, elbow, wrist and hip visible':(m.side===0?'L':'R')+' arm '+Math.round(m.el)+'° | '+(topReady?'top '+Math.round(topAngle)+'° / down '+Math.round(th.down)+'°':'calibrating top')+' | '+st}
+const inFrame=()=>{const m=metrics();return !!(m&&m.horizontal>=.38)};
+function proc(){const now=performance.now(),m=metrics();if(!m){if(!trackLost)trackLost=now;if(now-trackLost>450){st='seek';sm={};phaseAt=0}return {bad:'Show your near-side elbow and wrist'}}
+if(m.horizontal<.32){st='seek';phaseAt=0;return {bad:'Set the camera beside you, with your body in frame'}}
+if(!topReady){calibrateTop(m);return {bad:topReady?'Ready. Lower, then press up.':'Hold your normal top position to calibrate'}}
+const a=ema('a',m.el),th=thresholds();
+if(st==='seek'){if(a>=th.up){st='up';phaseAt=now}return {}}
+if(st==='up'){if(a>=th.up&&a>topAngle&&a<179)topAngle=topAngle*.995+a*.005;if(a<=th.down){st='dn';phaseAt=now;repBottom=a}return {}}
+if(st==='dn'){repBottom=Math.min(repBottom,a);if(now-phaseAt>10000){st='seek';return {}}if(a>=th.up&&now-phaseAt>=130&&a-repBottom>=25){st='up';phaseAt=now;return {rep:1}}}return {}}
+
+
+/* AI personality */
+
+function aiGap(el){const o=OP[rv],f=Math.max(.65,1-.025*S.wins),r=Math.random(),d=reps-ai;let g=o.base;
+
+if(rv==0)g*=.7+r*.9;else if(rv==1)g=(1.7+el/60*1.5)*(.9+r*.2);else if(rv==2)g*=.95+r*.1;
+
+else if(rv==3)g*=(d>=2?.7:d<=-2?1.15:1)*(.9+r*.2);else g*=(el%15>11?.7:1)*(d>=2?.8:1)*(.9+r*.2);return g*f}
+
+function say(cat,force){if(M||C)return;const n=performance.now();if(!force&&n-lastSay<2800)return;lastSay=n;const a=T[rv][cat],b=$('say');b.textContent=a[Math.random()*a.length|0];b.classList.add('on');clearTimeout(sayT);sayT=setTimeout(()=>b.classList.remove('on'),2600)}
+
+function setBot(m){mood=m;$('rival').innerHTML=M?bot('#9fb4ff',m,2):bot(OP[rv].c,m,rv)}
+
+
+
+/* battle flow */
+
+function frame(t){showDebug();if(ph=='pos'){if(!L){msg("Can't see you. Step back.",'#ff5a6e');hold=0;return}
+
+if(inFrame()){const m=metrics();calibrateTop(m);msg(topReady?'Calibrated!':'Hold your normal top position...','#6fe0a8');if(topReady)begin()}else{hold=0;msg('Get your whole body in frame','#ffd166')}}
+
+else if(ph=='fight'){if(!L){proc();msg("Can't see you",'#ff5a6e');return}const r=proc();if(r.bad)msg(r.bad,'#ff5a6e');else{msg('');if(r.rep)rep()}}}
+
+const setPos=()=>{ph='pos';hold=0;L=null;resetTracker(true);$('rb').hidden=true;$('sb').hidden=false};
+
+function begin(){$('sb').hidden=true;if(M){ph='wait';msg('Waiting for friend...','#ffd166');M.mrb=1;M.send({t:'rdy'});mpGo()}else countdown()}
+
+function countdown(){clearInterval(cdt);ph='cd';let n=3;msg(n,'#fff',1);sfx(300);cdt=setInterval(()=>{n--;if(n>0){msg(n,'#fff',1);sfx(300)}else{clearInterval(cdt);msg('GO!','#ffd166',1);setTimeout(()=>ph=='fight'&&msg(''),700);fight()}},1000)}
+
+function hud(){const o=OP[rv];$('rep').textContent=0;$('orep').textContent=0;$('tm').textContent=M?0:60;$('wsd').textContent=S.ws;
+
+$('yl').textContent='You';$('ol').textContent=M?'Friend':o.n;$('oc').hidden=!!C;$('arena').hidden=!!C;$('hr').hidden=!!C;
+
+$('hm').style.width=$('hr').firstChild.style.width='0%';$('say').classList.remove('on');setBot('idle')}
+
+function fight(){pend=null;$('nm').hidden=true;ph='fight';t0=performance.now();reps=0;ai=0;st='seek';sm={};phaseAt=0;sent=false;lastRep=lastTaunt=t0;hud();
+
+if(!M&&!C){nextAi=t0+aiGap(0)*1000;setTimeout(()=>say('start',1),300)}clearInterval(tmr);tmr=setInterval(tick,100)}
+
+function bars(){const o=M?M.opp:ai,tg=M?M.target:TARGET;$('hm').style.width=Math.min(100,reps/tg*100)+'%';$('hr').firstChild.style.width=Math.min(100,o/tg*100)+'%';$('rep').textContent=reps;$('orep').textContent=o}
+
+function rep(){if(ph!=='fight'||performance.now()-lastRep<450)return;reps++;S.xp+=10;lastRep=performance.now();sfx(220);pulse($('fx'),'on');bars();
+
+if(M){M.send({t:'r',n:reps});if(reps>=M.target){M.send({t:'win'});end(true)}return}
+
+if(!C&&reps>=TARGET)end(true)}
+
+function tick(){if(ph!='fight')return;const t=performance.now(),el=(t-t0)/1000;$('tm').textContent=M?Math.floor(el):Math.max(0,Math.ceil(60-el));
+
+if(!M&&!C&&t>=nextAi){ai++;nextAi=t+aiGap(el)*1000;pulse($('rival'),'bob');sfx(140,.08);bars();if(ai>=TARGET){end(false);return}}
+
+if(!C){const d=reps-(M?M.opp:ai),m=d>=3?'strain':d<=-3?'smug':'idle';
+
+if(m!=mood){setBot(m);if(m=='smug')say('lead');else if(m=='strain')say('behind')}
+
+if(!M&&el>3&&t-lastRep>4500&&t-lastTaunt>7000){lastTaunt=t;say('slow');if(mood=='idle')setBot('smug')}}
+
+if(!M&&el>=60)end(C?true:reps>ai?true:reps<ai?false:null)}
+
+
+
+/* end + scores */
+
+function end(win){if(ph!='fight')return;clearInterval(tmr);ph='end';const el=(performance.now()-t0)/1000,rpm=Math.round(reps/Math.max(el,5)*60),u0=OP.map((_,i)=>unl(i));
+
+let co=win===true&&!C?(M?30:20+rv*10):0;S.coins+=co;const y=day(new Date(Date.now()-864e5));if(S.last!=day()){S.streak=S.last==y?S.streak+1:1;S.last=day()}
+
+const ai_=!M&&!C;if(ai_){if(win===true){S.wins++;S.ws++;S.beat[rv]=1}else if(win===false)S.ws=0}else if(M&&win===true)S.ws++;else if(M&&win===false)S.ws=0;
+
+const nu=ai_?OP.filter((_,i)=>!u0[i]&&unl(i)).map(o=>o.n):[];save();stopCam();go('end');$('nx').hidden=true;$('rm').hidden=!!M;
+
+const res=$('res');$('endbot').innerHTML='';$('endsay').hidden=!ai_;$('endbot').hidden=!ai_;let h='';
+
+if(C){C.s.push(reps);res.textContent='Time!';res.style.color='var(--tx)';
+
+if(C.p==1){h=`Player 1 scored <b>${reps}</b> reps. Pass the phone!`;$('nx').hidden=false;$('rm').hidden=true}
+
+else{const[a,b]=C.s;h=`Player 1: <b>${a}</b><br>Player 2: <b>${b}</b><br>${a==b?'Draw!':a>b?'Player 1 wins!':'Player 2 wins!'}`;if(a!=b)conf();C=null}}
+
+else{res.textContent=win===true?'Victory':win===false?'Defeat':'Draw';res.style.color=win===true?'var(--ok)':win===false?'var(--bad)':'var(--tx)';if(win===true)conf();
+
+if(ai_){mood=win===true?'sad':win===false?'cheer':'idle';$('endbot').innerHTML=bot(OP[rv].c,mood,rv);$('endsay').textContent=T[rv][win===true?'lose':win===false?'win':'lead'][Math.random()*2|0]}
+
+h=`Your reps: <b>${reps}</b>${M?`<br>Friend: <b>${M.opp}</b>`:ai_?`<br>${OP[rv].n}: <b>${ai}</b>`:''}<br>Reps per minute: <b>${rpm}</b><br>XP: <b>+${reps*10}</b>${co?` · Coins: <b>+${co}</b>`:''}<br>Win streak: <b>${S.ws}</b> · Daily: <b>${strk()}</b>`+(nu.length?`<br><span style="color:var(--a)">Unlocked: ${nu.join(', ')}</span>`:'')+(win===true&&rv==4?'<br><span style="color:var(--a)">You beat the final boss!</span>':'')}
+
+h+='<br><span id="subst" class="lbl" style="letter-spacing:.06em;text-transform:none"></span>';$('sum').innerHTML=h;
+
+if(reps>=1&&reps<=MAXR&&el>=MINSEC){pend={reps,el};if(reps>(S.bd.d==day()?S.bd.r:0)){if(NAME)sendScore();else $('nm').hidden=false}else $('subst').textContent='Not submitted: only your best score of the day goes on the leaderboard.'}
+
+else $('subst').textContent=reps>MAXR?'Score not submitted (over the limit).':'Score not submitted (game too short).'}
+
+function conf(){const c=$('cf'),x=c.getContext('2d');c.width=innerWidth;c.height=innerHeight;const P=Array.from({length:120},()=>({x:Math.random()*c.width,y:-Math.random()*c.height/2,vx:Math.random()*4-2,vy:2+Math.random()*4,c:`hsl(${Math.random()*360},90%,60%)`,s:5+Math.random()*6}));let f=0;(function a(){x.clearRect(0,0,c.width,c.height);P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;x.fillStyle=p.c;x.fillRect(p.x,p.y,p.s,p.s*1.6)});++f<200?requestAnimationFrame(a):x.clearRect(0,0,c.width,c.height)})()}
+
+
+
+/* firebase leaderboard */
+
+let db=null,F=null,fbPending=null;
+
+const cfgOK=()=>firebaseConfig.apiKey&&!/PASTE|YOUR/i.test(firebaseConfig.apiKey+firebaseConfig.projectId);
+
+async function fbInit(){if(db)return db;if(!cfgOK())return null;if(fbPending)return fbPending;
+fbPending=(async()=>{try{const[a,f]=await Promise.all([import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"),import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js")]);F=f;db=f.getFirestore(a.getApps().length?a.getApp():a.initializeApp(firebaseConfig));return db}catch(e){console.warn(e);return null}finally{fbPending=null}})();return fbPending}
+
+async function sendScore(){const s=$('subst');if(sent||!pend||!NAME)return;sent=true;const r=Math.round(pend.reps);
+
+if(!Number.isInteger(r)||r<1||r>MAXR||pend.el<MINSEC)return;
+
+if(!await fbInit()){s.textContent=cfgOK()?'Leaderboard unreachable right now.':'Leaderboard offline: add your Firebase config.';sent=false;return}
+
+try{s.textContent='Submitting…';await F.addDoc(F.collection(db,'scores'),{name:NAME,reps:r,timestamp:F.serverTimestamp()});S.bd={d:day(),r};save();pend=null;s.textContent='Score saved to the leaderboard.';loadBoards()}
+
+catch(e){console.warn(e);sent=false;s.textContent='Could not submit score. Check Firebase config and rules, then retry.';const retry=document.createElement('button');retry.className='alt';retry.textContent='Retry score';retry.onclick=()=>{retry.remove();sendScore()};s.append(document.createElement('br'),retry)}}
+
+function fill(el,rows,mine){const seen=new Set(),out=[];for(const r of rows){if(typeof r.name!=='string'||!r.name.trim()||r.name.length>20||!Number.isInteger(r.reps)||r.reps<0||r.reps>MAXR)continue;const k=r.name.trim().toLowerCase();if(seen.has(k))continue;seen.add(k);out.push(r);if(out.length==20)break}
+
+el.innerHTML=out.length?out.map((r,i)=>`<div class="lg ${String(r.name).toLowerCase()==mine?'me':''}"><span class="rk">${String(i+1).padStart(2,'0')}</span><span class="nm">${esc(r.name.trim())}</span><span>${r.reps}</span></div>`).join(''):'<div class="lbl" style="padding:8px">No scores yet. Be the first.</div>'}
+
+async function loadBoards(){const a=$('lbA'),t=$('lbT');a.textContent=t.textContent='Loading…';
+
+if(!await fbInit()){a.innerHTML=t.innerHTML='<div class="lbl" style="padding:8px;text-transform:none;letter-spacing:.02em">'+(cfgOK()?'Leaderboard unreachable right now.':'Leaderboard offline. Paste your Firebase config at the top of the script.')+'</div>';return}
+
+try{const c=F.collection(db,'scores'),d0=new Date(),m=NAME.toLowerCase();d0.setHours(0,0,0,0);
+
+// Page rather than silently dropping scores beyond an arbitrary read limit.
+const all=[],today=[];let cursor=null;
+while(true){const q=F.query(c,F.orderBy('reps','desc'),...(cursor?[F.startAfter(cursor)]:[]),F.limit(100));const page=await F.getDocs(q);all.push(...page.docs.map(x=>x.data()));const validNames=new Set(all.filter(x=>typeof x.name==='string'&&x.name.trim()&&x.name.length<=20&&Number.isInteger(x.reps)&&x.reps>=0&&x.reps<=MAXR).map(x=>x.name.trim().toLowerCase()));if(page.docs.length<100||validNames.size>=20)break;cursor=page.docs[page.docs.length-1]}
+cursor=null;
+while(true){const q=F.query(c,F.where('timestamp','>=',F.Timestamp.fromDate(d0)),F.orderBy('timestamp','desc'),...(cursor?[F.startAfter(cursor)]:[]),F.limit(250));const page=await F.getDocs(q);today.push(...page.docs.map(x=>x.data()));if(page.docs.length<250)break;cursor=page.docs[page.docs.length-1]}
+fill(a,all,m);fill(t,today.sort((x,y)=>y.reps-x.reps),m)}
+
+catch(e){console.warn(e);a.textContent=t.textContent='Could not load scores.'}}
+
+
+
+/* shop */
+
+function shop(){$('th').innerHTML=THEMES.map((t,i)=>{const o=S.own.includes(i);return`<div class="pn row" style="margin-bottom:8px"><div style="color:${t[1]};font:700 20px Georgia,serif">${t[0]}</div><button data-a="theme" data-v="${i}" ${!o&&S.coins<t[2]?'disabled':''}>${S.theme==i?'In use':o?'Use':'Buy · '+t[2]}</button></div>`}).join('');go('shop')}
+
+
+
+/* online duel */
+
+const tgUi=()=>{$('tgs').innerHTML=[10,20,30,50].map(n=>`<button class="alt ${n==tgt?'sel':''}" style="${n==tgt?'border-color:var(--a)':''}" data-a="tg" data-v="${n}">${n}</button>`).join('');$('tg').textContent=tgt};
+function mpClose(){if(M){const m=M;M=null;clearTimeout(m.timeout);clearInterval(m.handshake);try{m.conn&&m.conn.close()}catch(e){}try{m.peer&&m.peer.destroy()}catch(e){}}}
+const mpInfo=t=>{$('mpinfo').hidden=false;$('mpinfo').textContent=t};
+function mpFail(text){mpClose();clearInterval(tmr);clearInterval(cdt);ph='idle';stopCam();go('mp');mpInfo(text)}
+function mpStart(){if(!M||M.started)return;M.started=true;clearTimeout(M.timeout);clearInterval(M.handshake);M.opp=0;M.mrb=0;M.orb=0;C=null;startPlay()}
+function mpGo(){if(M&&M.host&&M.mrb&&M.orb&&!M.goSent){M.goSent=true;M.send({t:'go'});countdown()}}
+function mpWire(c){if(!M)return;const m=M;m.conn=c;m.send=o=>{try{if(c.open)c.send(o)}catch(e){mpFail('Could not send data. Recreate the room.')}};c.on('data',d=>{if(M===m)mpMsg(d)});c.on('error',()=>M===m&&mpFail('Connection failed. Try another network or create a new room.'));c.on('close',()=>{if(M===m&&ph!='end')mpFail('Your friend disconnected. Create or join another room.')});const hello=()=>{if(M!==m||!c.open)return;m.send(m.host?{t:'cfg',target:m.target}:{t:'hello'})};c.on('open',hello);m.handshake=setInterval(hello,600);if(c.open)hello()}
+function mpMsg(d){if(!M||!d||typeof d!=='object')return;if(d.t==='hello'&&M.host)M.send({t:'cfg',target:M.target});else if(d.t==='cfg'&&!M.host&&[10,20,30,50].includes(d.target)){tgt=d.target;M.target=tgt;M.send({t:'ack'});mpStart()}else if(d.t==='ack'&&M.host)mpStart();else if(d.t==='rdy'&&M.started){M.orb=1;mpGo()}else if(d.t==='go'&&M.started&&M.mrb&&ph==='wait')countdown();else if(d.t==='r'&&M.started&&Number.isInteger(d.n)&&d.n>=M.opp&&d.n<=M.target){M.opp=d.n;if(ph==='fight'){bars();if(M.opp>=M.target)end(reps>=M.target?null:false)}}else if(d.t==='win'&&ph==='fight'&&M.opp>=M.target)end(false)}
+function peerError(e){const t=e&&e.type;return t==='peer-unavailable'?'No open room with that code. The host must keep the room open.':t==='unavailable-id'?'That room code is busy. Tap Create room again.':t==='network'||t==='server-error'||t==='socket-error'?'Cannot reach the free connection service. Try another network.':'Connection failed ('+(t||'unknown')+'). School Wi-Fi or a VPN may block it. Try another network.'}
+function createRoom(){mpClose();if(!window.Peer)return mpInfo('Multiplayer library did not load. Check internet and reload.');const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',bytes=crypto.getRandomValues(new Uint8Array(5)),code=Array.from(bytes,b=>alphabet[b%alphabet.length]).join(''),p=new Peer('adastra-'+code);const m=M={host:true,target:tgt,opp:0,peer:p};mpInfo('Opening room...');m.timeout=setTimeout(()=>M===m&&mpFail('Could not open a room. Try another network.'),20000);p.on('open',()=>{if(M!==m)return;clearTimeout(m.timeout);mpInfo('Room code: '+code+'. Keep this screen open while your friend joins. Both players must use this same game version.')});p.on('connection',c=>{if(M!==m||m.conn){c.close();return}m.timeout=setTimeout(()=>M===m&&!m.started&&mpFail('Your friend could not connect. Both try another network.'),20000);mpWire(c)});p.on('error',e=>M===m&&mpFail(peerError(e)))}
+function joinRoom(){const code=$('rc').value.toUpperCase().replace(/[^A-Z0-9]/g,'');if(code.length!==5)return mpInfo('Enter the full 5-character room code.');mpClose();if(!window.Peer)return mpInfo('Multiplayer library did not load. Check internet and reload.');const p=new Peer(),m=M={host:false,target:tgt,opp:0,peer:p};mpInfo('Connecting to room '+code+'...');m.timeout=setTimeout(()=>M===m&&!m.started&&mpFail('Connection timed out. Check the code and keep the host room open. If correct, both try another network.'),20000);p.on('open',()=>{if(M!==m)return;mpWire(p.connect('adastra-'+code,{reliable:true,serialization:'json'}))});p.on('error',e=>M===m&&mpFail(peerError(e)))}
+
+/* actions */
+
+function startPlay(){ph='idle';go('play');$('rb').hidden=false;$('sb').hidden=true;hud();cam()}
+
+const act={rv(i){rv=+i;home()},snd(){S.snd=S.snd?0:1;save();home()},shop,
+
+board(){go('boards');loadBoards()},
+
+go(){C=null;mpClose();startPlay()},chal(){C={p:1,s:[]};mpClose();startPlay()},
+
+duel(){go('mp');tgUi();$('mpinfo').hidden=true},tg(n){tgt=+n;tgUi()},
+
+mkroom:createRoom,join:joinRoom,
+
+theme(i){i=+i;const t=THEMES[i];if(!S.own.includes(i)){if(S.coins<t[2])return;S.coins-=t[2];S.own.push(i)}S.theme=i;save();applyTheme();shop()},
+
+ready(){if(!pl||!stream)return;setPos()},skip(){if(ph=='pos'){topReady=true;topAngle=165;begin()}},
+
+flip(){if(ph!='idle')return;face=face=='user'?'environment':'user';cam()},skel(){sk=!sk},
+
+home(){clearInterval(tmr);clearInterval(cdt);ph='idle';C=null;mpClose();stopCam();$('nm').hidden=true;home()},
+
+again(){if(M)return;C=null;go('play');hud();setPos();cam()},
+
+next(){C.p=2;go('play');hud();setPos();cam()},
+
+nsave(){const n=$('ni').value.replace(/[<>]/g,'').trim().slice(0,16);if(!n)return;NAME=n;try{localStorage.setItem(NK,n)}catch(e){}$('nm').hidden=true;sendScore()},
+
+nskip(){pend=null;$('nm').hidden=true;$('subst').textContent='Score not submitted.'}};
+
+document.addEventListener('click',e=>{if(!ac)try{ac=new(window.AudioContext||window.webkitAudioContext)()}catch(x){}if(ac&&ac.state=='suspended')ac.resume();
+
+const b=e.target.closest('[data-a]');if(b&&act[b.dataset.a])act[b.dataset.a](b.dataset.v)});
+
+function stars(){const c=$('stars'),x=c.getContext('2d');c.width=innerWidth;c.height=innerHeight;for(let i=0;i<110;i++){x.fillStyle=`rgba(239,230,210,${.15+Math.random()*.5})`;const s=Math.random()<.1?2:1;x.fillRect(Math.random()*c.width,Math.random()*c.height,s,s)}}
+
+stars();addEventListener('resize',stars);applyTheme();home();
+
+</script></body></html>
