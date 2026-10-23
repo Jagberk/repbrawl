@@ -1,1 +1,184 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#1b1536"><title>REPBRAWL</title>
+<style>
+:root{--bg:#1b1536;--sf:#2b2253;--tx:#f6f1ff;--a:#ffc21a;--ok:#5be3a0;--bad:#ff5d73}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--tx);font:600 16px system-ui,sans-serif;min-height:100dvh;display:flex;justify-content:center}
+#app{width:100%;max-width:480px;padding:16px;padding-top:max(16px,env(safe-area-inset-top));padding-bottom:max(24px,env(safe-area-inset-bottom))}
+section{display:none;flex-direction:column;gap:12px}section.on{display:flex}
+.logo{font:900 46px Impact,'Arial Black',sans-serif;text-align:center;transform:skew(-6deg);margin:4px 0}
+.logo b{background:var(--a);color:var(--bg);padding:0 8px;margin-right:4px}
+.logo i{font-style:normal;-webkit-text-stroke:2px var(--tx);color:transparent}
+.big{font:900 60px Impact,'Arial Black',sans-serif;line-height:1}
+.card{background:var(--sf);border-radius:18px;padding:14px}
+.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}
+.stat{text-align:center;font-size:22px}.stat small{opacity:.7;font-size:13px}
+button{font:800 18px system-ui,sans-serif;min-height:56px;border:0;border-radius:14px;background:var(--a);color:var(--bg);padding:0 12px}
+button:active{transform:scale(.97)}button.alt{background:var(--sf);color:var(--tx);border:2px solid #fff2}
+button.sel{border-color:var(--a)}button:disabled{opacity:.4}
+.bar{height:16px;background:#0006;border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;width:100%;background:var(--ok);transition:width .2s}#hr i{background:var(--bad)}
+#arena{position:relative;height:130px;display:flex;justify-content:center}#rival{width:120px}
+.hit{animation:fl .25s}@keyframes fl{0%{filter:brightness(5)}100%{filter:none}}
+.shk{animation:sk .3s}@keyframes sk{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.dn{position:absolute;top:30%;font:900 30px Impact,sans-serif;color:var(--a);animation:up .7s forwards;pointer-events:none}@keyframes up{to{transform:translateY(-50px);opacity:0}}
+#fx{position:fixed;inset:0;background:var(--a);opacity:0;pointer-events:none;z-index:5}#fx.on{animation:fx .15s}@keyframes fx{0%{opacity:.35}100%{opacity:0}}
+#vw{position:relative;width:100%;max-height:46vh;background:#000;border-radius:18px;overflow:hidden;aspect-ratio:4/3}
+#vw video,#vw canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+#msg{position:absolute;left:0;right:0;bottom:10px;text-align:center;font:900 24px Impact,sans-serif;text-shadow:0 2px 6px #000;padding:0 8px}
+#msg.big{top:25%;bottom:auto;font-size:110px}
+#cf{position:fixed;inset:0;pointer-events:none;z-index:6}
+.lg{display:flex;justify-content:space-between;padding:10px 12px;border-radius:12px;font-size:18px}.lg.me{background:var(--a);color:var(--bg)}
+</style></head><body><div id="fx"></div><canvas id="cf"></canvas><div id="app">
 
+<section id="home" class="on">
+<div class="logo"><b>REP</b><i>BRAWL</i></div>
+<div class="row" id="stats"></div>
+<div class="card"><div style="margin-bottom:8px">Exercise</div><div class="row" id="ex" style="flex-wrap:wrap"></div></div>
+<div class="card"><div style="margin-bottom:8px">Rival: <span id="rvt"></span></div><div class="row" id="rv"></div></div>
+<button data-a="go">Battle</button>
+<div class="row"><button class="alt" data-a="league">League</button><button class="alt" data-a="shop">Themes</button></div>
+<div class="row"><button class="alt" data-a="chal">Challenge a friend</button><button class="alt" data-a="snd" id="snd"></button></div>
+</section>
+
+<section id="play">
+<div class="card">
+<div class="row"><div id="rep" class="big">0</div><div id="tm" class="big" style="text-align:right">60</div></div>
+<div id="arena"><div id="rival"></div></div>
+<div class="row" style="margin-top:6px"><div>You</div><div id="rn" style="text-align:right"></div></div>
+<div class="row"><div class="bar"><i id="hm"></i></div><div class="bar" id="hr"><i></i></div></div>
+</div>
+<div id="vw"><video id="v" playsinline muted></video><canvas id="cv"></canvas><div id="msg"></div></div>
+<div class="card" id="deny" hidden></div>
+<div class="row"><button id="rb" data-a="ready">I'm in frame</button><button class="alt" data-a="flip">Flip cam</button></div>
+<div class="row"><button class="alt" data-a="skel">Skeleton</button><button class="alt" data-a="home">Exit</button></div>
+<div class="card" id="hint"></div>
+</section>
+
+<section id="end">
+<div class="big" id="res" style="text-align:center;margin-top:20px"></div>
+<div class="card" id="sum" style="font-size:20px;line-height:1.7"></div>
+<button id="nx" data-a="next" hidden>Player 2: your turn</button>
+<button id="rm" data-a="again">Rematch</button><button class="alt" data-a="home">Home</button>
+</section>
+
+<section id="league"><div class="logo" style="font-size:34px">Weekly league</div><div id="lb"></div><div class="card">Resets every Monday.</div><button class="alt" data-a="home">Back</button></section>
+<section id="shop"><div class="logo" style="font-size:34px">Themes</div><div id="th"></div><button class="alt" data-a="home">Back</button></section>
+</div>
+
+<script type="module">
+import{PoseLandmarker,FilesetResolver}from"https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+const $=id=>document.getElementById(id),K='repbrawl1',v=$('v'),cv=$('cv'),cx=cv.getContext('2d');
+let S={xp:0,coins:0,streak:0,last:'',snd:1,theme:0,own:[0],wk:{k:'',reps:0}};
+try{Object.assign(S,JSON.parse(localStorage.getItem(K)||'{}'))}catch(e){}
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+const day=d=>{d=d||new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
+const wkKey=()=>{const d=new Date();return day(new Date(d.getFullYear(),d.getMonth(),d.getDate()-(d.getDay()+6)%7))};
+const wk=()=>{if(S.wk.k!=wkKey()){S.wk={k:wkKey(),reps:0};save()}};
+const THEMES=[['Ember','#ffc21a',0],['Ice','#4fe3ff',150],['Bloom','#ff6fb5',300]];
+const applyTheme=()=>document.documentElement.style.setProperty('--a',THEMES[S.theme][1]);
+const LV=()=>1+Math.floor(S.xp/200);
+const strk=()=>S.last==day()||S.last==day(new Date(Date.now()-864e5))?S.streak:0;
+const RIV=[['Wobble',100,5,6,'#6ee7b7'],['Grumbo',160,4.5,7,'#93c5fd'],['Spike',230,4,8,'#fca5a5'],['Brutus',320,3.7,8,'#d8b4fe'],['Titan',440,3.4,9,'#fdba74']];
+const EX=[['pushup','Push-ups'],['squat','Squats'],['jack','Jumping jacks'],['box','Shadow boxing']];
+const HINT={pushup:'Put your phone on the floor at your side, about 6 to 10 feet away, with your whole body in frame.',squat:'Prop your phone 6 to 10 feet away, facing you from the front or side, whole body in frame.',jack:'Prop your phone 6 to 10 feet away, facing you from the front, whole body in frame.',box:'Prop your phone 6 to 10 feet away facing you. Keep your shoulders and arms in frame.'};
+const rsvg=c=>`<svg viewBox="0 0 120 120"><path d="M30 28l8 20M90 28l-8 20" stroke="${c}" stroke-width="10" stroke-linecap="round"/><rect x="18" y="38" width="84" height="72" rx="30" fill="${c}"/><circle cx="44" cy="68" r="11" fill="#fff"/><circle cx="76" cy="68" r="11" fill="#fff"/><circle cx="46" cy="70" r="5" fill="#1b1536"/><circle cx="74" cy="70" r="5" fill="#1b1536"/><path d="M40 94q20-12 40 0M32 54l22 6M88 54l-22 6" stroke="#1b1536" stroke-width="5" fill="none" stroke-linecap="round"/></svg>`;
+let ex='pushup',rv=0,face='user',C=null,ph='idle',sk=true,stream,pl,raf=0,L,lastT=0,ac;
+let st='up',sm={},pd=[null,null],cool=[0,0],pt=0,hold=0,t0=0,reps=0,mine=100,rhp=0,rmax=1,nextHit=0,tmr,cdt;
+const go=id=>document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id==id));
+const pulse=(el,c)=>{el.classList.remove(c);void el.offsetWidth;el.classList.add(c)};
+const msg=(t,c,big)=>{const m=$('msg');m.textContent=t;m.style.color=c||'#fff';m.className=big?'big':''};
+const sfx=(f=200,d=.12)=>{if(!S.snd||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain(),n=ac.currentTime;o.type='square';o.frequency.setValueAtTime(f,n);o.frequency.exponentialRampToValueAtTime(40,n+d);g.gain.setValueAtTime(.25,n);g.gain.exponentialRampToValueAtTime(.001,n+d);o.connect(g).connect(ac.destination);o.start();o.stop(n+d)}catch(e){}};
+
+function home(){go('home');wk();const s=strk();
+$('stats').innerHTML=`<div class="card stat">Lv ${LV()}<br><small>${S.xp} XP</small></div><div class="card stat">🪙<br>${S.coins}</div><div class="card stat">🔥<br>${s} day${s==1?'':'s'}</div>`;
+$('ex').innerHTML=EX.map(e=>`<button class="alt ${e[0]==ex?'sel':''}" style="flex:1 1 45%" data-a="ex" data-v="${e[0]}">${e[1]}</button>`).join('');
+$('rv').innerHTML=RIV.map((r,i)=>`<button class="alt ${i==rv?'sel':''}" data-a="rv" data-v="${i}" ${i>=LV()?'disabled':''}>${i<LV()?i+1:'🔒'}</button>`).join('');
+$('rvt').textContent=RIV[rv][0];$('snd').textContent=S.snd?'Sound on':'Sound off'}
+
+/* camera + pose */
+async function loadPose(){msg('Loading tracker…');const fs=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+const o=d=>({baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",delegate:d},runningMode:"VIDEO",numPoses:1});
+try{pl=await PoseLandmarker.createFromOptions(fs,o("GPU"))}catch(e){pl=await PoseLandmarker.createFromOptions(fs,o("CPU"))}}
+function stopCam(){cancelAnimationFrame(raf);raf=0;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null}
+async function cam(){stopCam();const d=$('deny');d.hidden=true;
+try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:face,width:{ideal:640},height:{ideal:480}},audio:false});
+v.srcObject=stream;await v.play();cv.width=v.videoWidth;cv.height=v.videoHeight;$('vw').style.aspectRatio=v.videoWidth+'/'+v.videoHeight;
+if(!pl)await loadPose();msg(ph=='idle'?'Frame your whole body, then tap "I\'m in frame"':'');loop()}
+catch(e){stopCam();d.hidden=false;d.innerHTML=(e.name=='NotAllowedError'||e.name=='SecurityError'||!navigator.mediaDevices)?
+`<b>Camera blocked.</b><ol style="margin:8px 0 0 20px;line-height:1.6"><li>Tap the lock or camera icon in your browser's address bar.</li><li>Set Camera to Allow.</li><li>Reload this page.</li></ol><p style="margin-top:8px">The camera only works over HTTPS (GitHub Pages and Netlify both provide it). Video never leaves your phone.</p>`:
+`<b>Couldn't start.</b> ${e.name}: ${e.message}. Check your connection (the tracker downloads once) and that no other app is using the camera.`}}
+function loop(){raf=requestAnimationFrame(loop);const t=performance.now();if(!pl||v.readyState<2||t-lastT<50)return;lastT=t;
+try{const r=pl.detectForVideo(v,t);L=r.landmarks&&r.landmarks[0]}catch(e){return}draw();frame(t)}
+const LINK=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28]];
+function draw(){cx.clearRect(0,0,cv.width,cv.height);if(!sk||!L)return;const a=getComputedStyle(document.documentElement).getPropertyValue('--a');cx.strokeStyle=a;cx.fillStyle='#fff';cx.lineWidth=4;
+LINK.forEach(([i,j])=>{if((L[i].visibility||0)>.4&&(L[j].visibility||0)>.4){cx.beginPath();cx.moveTo(L[i].x*cv.width,L[i].y*cv.height);cx.lineTo(L[j].x*cv.width,L[j].y*cv.height);cx.stroke()}});
+[11,12,13,14,15,16,23,24,25,26,27,28].forEach(i=>{if((L[i].visibility||0)>.4){cx.beginPath();cx.arc(L[i].x*cv.width,L[i].y*cv.height,5,0,7);cx.fill()}})}
+
+/* geometry + counting */
+const AR=()=>v.videoWidth/v.videoHeight||.75;
+const ang=(a,b,c)=>{const x1=(a.x-b.x)*AR(),y1=a.y-b.y,x2=(c.x-b.x)*AR(),y2=c.y-b.y;return Math.abs(Math.atan2(x1*y2-y1*x2,x1*x2+y1*y2)*180/Math.PI)};
+const vis=i=>L[i].visibility||0;
+const pk=(a,b,c)=>{const o=vis(a)+vis(b)+vis(c)>=vis(a+1)+vis(b+1)+vis(c+1)?0:1;return[L[a+o],L[b+o],L[c+o]]};
+const ema=(k,x)=>sm[k]=sm[k]==null?x:sm[k]*.6+x*.4;
+function ready(){if(ex=='pushup'){const[s,h,a]=pk(11,23,27);return ang(s,h,a)>155&&Math.abs(s.y-a.y)<.5*Math.abs(s.x-a.x)*AR()}
+if(ex=='box')return[11,12,13,14].every(i=>vis(i)>.4);
+return[11,23,27].some(i=>vis(i)<.4)?false:L[11].y<L[23].y&&L[23].y<L[27].y}
+function proc(){
+if(ex=='pushup'){const[s,e,w]=pk(11,13,15),a=ema('a',ang(s,e,w)),[s2,h,k]=pk(11,23,27),b=ema('b',ang(s2,h,k));
+if(b<150)return{bad:'Straighten your body'};
+if(st=='up'&&a<90)st='dn';else if(st=='dn'&&a>160){st='up';return{rep:1}}return{}}
+if(ex=='squat'){const[h,k,a]=pk(23,25,27),g=ema('k',ang(h,k,a));
+if(st=='up'&&g<90)st='dn';else if(st=='dn'&&g>160){st='up';return{rep:1}}return{}}
+if(ex=='jack'){const w1=L[15],w2=L[16],n=L[0],s1=L[11],s2=L[12],sw=Math.abs(s1.x-s2.x)+.001,sp=Math.abs(L[27].x-L[28].x);
+const up=w1.y<n.y&&w2.y<n.y&&sp>sw*1.5,dn=w1.y>s1.y&&w2.y>s2.y&&sp<sw*1.2;
+if(st=='up'&&up)st='hi';else if(st=='hi'&&dn){st='up';return{rep:1}}return{}}
+const t=performance.now(),dt=(t-pt)/1000||.05;pt=t;let hit=0;const tor=Math.hypot((L[11].x-L[23].x)*AR(),L[11].y-L[23].y)+.001;
+[[15,11],[16,12]].forEach(([w,s],i)=>{const d=Math.hypot((L[w].x-L[s].x)*AR(),L[w].y-L[s].y)/tor;
+if(pd[i]!=null&&(d-pd[i])/dt>2.2&&d>.7&&t>cool[i]){hit=1;cool[i]=t+350}pd[i]=d});
+return hit?{rep:1}:{}}
+
+/* battle */
+function hud(){const R=RIV[rv];$('rep').textContent=0;$('tm').textContent=60;$('rival').innerHTML=rsvg(R[4]);$('rn').textContent=C?'Rival (idle)':R[0];$('hm').style.width=$('hr').firstChild.style.width='100%'}
+function frame(t){if(ph=='pos'){if(!L){msg("Can't see you. Step back.",'#ff5d73');hold=0;return}
+if(ready()){hold=hold||t;const p=(t-hold)/2000;msg('Hold it… '+Math.max(0,Math.ceil(2-(t-hold)/1000)),'#5be3a0');if(p>=1)countdown()}else{hold=0;msg(ex=='pushup'?'Get in plank position':'Stand tall, whole body in frame','#ffc21a')}}
+else if(ph=='fight'){if(!L){msg("Can't see you",'#ff5d73');return}const r=proc();if(r.bad)msg(r.bad,'#ff5d73');else{msg('');if(r.rep)rep()}}}
+function countdown(){ph='cd';let n=3;msg(n,'#fff',1);sfx(300);cdt=setInterval(()=>{n--;if(n>0){msg(n,'#fff',1);sfx(300)}else{clearInterval(cdt);msg('GO!','#ffc21a',1);setTimeout(()=>ph=='fight'&&msg(''),700);fight()}},1000)}
+function fight(){const R=RIV[rv];ph='fight';t0=performance.now();reps=0;mine=100;rhp=rmax=C?1:R[1];st='up';sm={};pd=[null,null];cool=[0,0];hud();nextHit=t0+R[2]*1000;clearInterval(tmr);tmr=setInterval(tick,100)}
+function rep(){reps++;S.xp+=10;$('rep').textContent=reps;const d=8+(Math.random()*5|0);sfx(220);pulse($('fx'),'on');
+if(!C){rhp-=d;mine=Math.min(100,mine+1);bars();pulse($('rival'),'hit');const s=document.createElement('span');s.className='dn';s.textContent='-'+d;s.style.left=(35+Math.random()*30)+'%';$('arena').appendChild(s);setTimeout(()=>s.remove(),700);if(rhp<=0)end(true)}}
+function bars(){$('hm').style.width=Math.max(0,mine)+'%';$('hr').firstChild.style.width=Math.max(0,rhp/rmax*100)+'%'}
+function tick(){const t=performance.now(),rem=60-(t-t0)/1000,R=RIV[rv];$('tm').textContent=Math.max(0,Math.ceil(rem));
+if(!C&&t>=nextHit){nextHit+=R[2]*1000;mine-=R[3];bars();sfx(90,.2);pulse($('arena'),'shk')}
+if(ph!='fight')return;if(mine<=0)end(false);else if(rem<=0)end(false)}
+function end(win){clearInterval(tmr);ph='end';const el=Math.min(60,(performance.now()-t0)/1000),rpm=Math.round(reps/Math.max(el,5)*60),lv=LV();
+const co=win&&!C?20+rv*10:0;S.coins+=co;const y=day(new Date(Date.now()-864e5));if(S.last!=day()){S.streak=S.last==y?S.streak+1:1;S.last=day()}
+wk();S.wk.reps+=reps;save();stopCam();go('end');$('nx').hidden=true;$('rm').hidden=false;let h='';
+if(C){C.s.push(reps);$('res').textContent='TIME!';
+if(C.p==1){h=`Player 1 scored <b>${reps}</b> reps. Pass the phone!`;$('nx').hidden=false;$('rm').hidden=true}
+else{const[a,b]=C.s;h=`Player 1: <b>${a}</b><br>Player 2: <b>${b}</b><br>${a==b?'Draw!':a>b?'Player 1 wins!':'Player 2 wins!'}`;if(a!=b)conf();C=null}}
+else{$('res').textContent=win?'YOU WIN!':'YOU LOSE';$('res').style.color=win?'var(--ok)':'var(--bad)';if(win)conf();
+h=`Reps: <b>${reps}</b><br>Reps per minute: <b>${rpm}</b><br>XP: <b>+${reps*10}</b>${co?`<br>Coins: <b>+${co}</b>`:''}<br>🔥 Streak: <b>${strk()}</b>`+(LV()>lv?`<br>Level up! Lv ${LV()}${LV()<=5?' · new rival unlocked':''}`:'')}
+$('sum').innerHTML=h}
+function conf(){const c=$('cf'),x=c.getContext('2d');c.width=innerWidth;c.height=innerHeight;const P=Array.from({length:120},()=>({x:Math.random()*c.width,y:-Math.random()*c.height/2,vx:Math.random()*4-2,vy:2+Math.random()*4,c:`hsl(${Math.random()*360},90%,60%)`,s:5+Math.random()*6}));let f=0;(function a(){x.clearRect(0,0,c.width,c.height);P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;x.fillStyle=p.c;x.fillRect(p.x,p.y,p.s,p.s*1.6)});++f<200?requestAnimationFrame(a):x.clearRect(0,0,c.width,c.height)})()}
+
+/* league + shop */
+function league(){wk();let sd=[...S.wk.k].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);const rnd=()=>(sd=(sd*1664525+1013904223)>>>0)/4294967296;
+const A=['Turbo','Iron','Nimble','Rapid','Mighty','Sly','Blazing','Atomic','Zesty','Frosty'],B=['Otter','Falcon','Panda','Moose','Gecko','Bison','Lynx','Walrus','Heron','Yak'],f=((new Date().getDay()+6)%7+1)/7;
+const rows=Array.from({length:9},()=>({n:A[rnd()*10|0]+' '+B[rnd()*10|0],r:Math.round((60+rnd()*340)*f)}));rows.push({n:'You',r:S.wk.reps,me:1});rows.sort((a,b)=>b.r-a.r);
+$('lb').innerHTML=rows.map((r,i)=>`<div class="lg ${r.me?'me':''}"><span>${i+1}. ${r.n}</span><span>${r.r} reps</span></div>`).join('');go('league')}
+function shop(){$('th').innerHTML=THEMES.map((t,i)=>{const o=S.own.includes(i);return`<div class="card row" style="margin-bottom:8px"><div style="color:${t[1]};font-size:22px">● ${t[0]}</div><button data-a="theme" data-v="${i}" ${!o&&S.coins<t[2]?'disabled':''}>${S.theme==i?'In use':o?'Use':'Buy 🪙'+t[2]}</button></div>`}).join('');go('shop')}
+
+/* actions */
+function startPlay(){ph='idle';go('play');$('rb').hidden=false;$('hint').textContent=HINT[ex];hud();cam()}
+const act={go(){C=null;startPlay()},chal(){C={p:1,s:[]};startPlay()},ex(x){ex=x;home()},rv(x){rv=+x;home()},
+snd(){S.snd=S.snd?0:1;save();home()},league,shop,skel(){sk=!sk},
+theme(i){i=+i;const t=THEMES[i];if(!S.own.includes(i)){if(S.coins<t[2])return;S.coins-=t[2];S.own.push(i)}S.theme=i;save();applyTheme();shop()},
+ready(){if(!pl||!stream)return;ph='pos';hold=0;$('rb').hidden=true},
+flip(){face=face=='user'?'environment':'user';cam()},
+home(){clearInterval(tmr);clearInterval(cdt);ph='idle';C=null;stopCam();home()},
+again(){go('play');$('rb').hidden=true;hud();ph='pos';hold=0;if(!stream)cam()},
+next(){C.p=2;go('play');$('rb').hidden=true;hud();ph='pos';hold=0;cam()}};
+document.addEventListener('click',e=>{if(!ac)try{ac=new(window.AudioContext||window.webkitAudioContext)()}catch(x){}if(ac&&ac.state=='suspended')ac.resume();
+const b=e.target.closest('[data-a]');if(b&&act[b.dataset.a])act[b.dataset.a](b.dataset.v)});
+applyTheme();home();
+</script></body></html>
